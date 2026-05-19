@@ -1,0 +1,60 @@
+version: '3.9'
+
+services:
+
+  apisix:
+    image: apache/apisix:3.9.1-debian
+    container_name: apisix
+    ports:
+      - "9080:9080"
+      - "9180:9180"
+    volumes:
+      - ./apisix/apisix.yaml:/usr/local/apisix/conf/apisix.yaml:ro
+    depends_on:
+      - fastapi-wrapper
+
+  fastapi-wrapper:
+    build: ./fastapi-wrapper
+    container_name: fastapi-wrapper
+    ports:
+      - "8000:8000"
+    environment:
+      AIRFLOW_BASE_URL: http://airflow-webserver:8080
+      AIRFLOW_USERNAME: admin
+      AIRFLOW_PASSWORD: admin
+    depends_on:
+      - airflow-webserver
+
+  postgres:
+    image: postgres:15
+    container_name: airflow-postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+
+  airflow-webserver:
+    image: apache/airflow:2.9.3
+    container_name: airflow-webserver
+    restart: always
+    depends_on:
+      - postgres
+    env_file:
+      - ./airflow/airflow.env
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+    command: webserver
+    ports:
+      - "8081:8080"
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.3
+    container_name: airflow-scheduler
+    restart: always
+    depends_on:
+      - airflow-webserver
+    env_file:
+      - ./airflow/airflow.env
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+    command: scheduler
