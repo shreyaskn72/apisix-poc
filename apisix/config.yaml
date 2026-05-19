@@ -1,0 +1,17 @@
+
+deployment:
+  admin:
+    allow_admin:
+      - 0.0.0.0/0
+
+  etcd:
+    host:
+      - "http://etcd:2379"
+
+apisix:
+  node_listen: 9080
+
+plugin_attr:
+  key-auth:
+    header: apikey
+

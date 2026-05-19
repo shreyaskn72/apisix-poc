@@ -100,7 +100,7 @@ services:
       - "9080:9080"
       - "9180:9180"
     volumes:
-      - ./apisix/apisix.yaml:/usr/local/apisix/conf/apisix.yaml:ro
+      - ./apisix/config.yaml:/usr/local/apisix/conf/config.yaml:ro
     depends_on:
       - fastapi-wrapper
 
