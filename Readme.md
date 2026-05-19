@@ -410,6 +410,51 @@ admin/admin
 
 ---
 
+# Configure Route Using Admin API
+```bash
+
+curl http://127.0.0.1:9180/apisix/admin/routes/1 \
+-X PUT \
+-H "X-API-KEY: edd1c9f034335f136f87ad84b625c8f1" \
+-d '
+{
+  "uri": "/trigger/*",
+  "methods": ["POST"],
+  "plugins": {
+    "key-auth": {},
+    "proxy-rewrite": {
+      "headers": {
+        "set": {
+          "X-Client-Id": "clientA",
+          "X-Org-Id": "orgA"
+        }
+      }
+    }
+  },
+  "upstream": {
+    "type": "roundrobin",
+    "nodes": {
+      "fastapi-wrapper:8000": 1
+    }
+  }
+}'
+```
+# Create Consumer
+```bash
+curl http://127.0.0.1:9180/apisix/admin/consumers \
+-X PUT \
+-H "X-API-KEY: edd1c9f034335f136f87ad84b625c8f1" \
+-d '
+{
+  "username": "clientA",
+  "plugins": {
+    "key-auth": {
+      "key": "clientA-secret-key"
+    }
+  }
+}'
+```
+
 # STEP 12 — Trigger DAG Through APISIX
 
 Run:
