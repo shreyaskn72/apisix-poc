@@ -20,7 +20,7 @@ RBAC = {
 def trigger_dag(
     dag_id: str,
     x_client_id: str = Header(...),
-    x_org_id: str = Header(...)
+    #x_org_id: str = Header(...)
 ):
 
     if dag_id not in RBAC.get(x_client_id, []):
@@ -32,7 +32,7 @@ def trigger_dag(
     payload = {
         "conf": {
             "client_id": x_client_id,
-            "org_id": x_org_id
+            #"org_id": x_org_id
         }
     }
 

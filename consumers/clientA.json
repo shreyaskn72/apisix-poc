@@ -1,0 +1,10 @@
+
+{
+  "username": "clientA",
+  "plugins": {
+    "key-auth": {
+      "key": "clientA-secret-key"
+    }
+  }
+}
+

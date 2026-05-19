@@ -1,0 +1,20 @@
+{
+  "uri": "/trigger/*",
+  "methods": ["POST"],
+  "plugins": {
+    "key-auth": {},
+    "proxy-rewrite": {
+      "headers": {
+        "set": {
+          "X-Client-Id": "$consumer_name"
+        }
+      }
+    }
+  },
+  "upstream": {
+    "type": "roundrobin",
+    "nodes": {
+      "fastapi-wrapper:8000": 1
+    }
+  }
+}
