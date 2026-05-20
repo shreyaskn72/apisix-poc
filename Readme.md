@@ -54,7 +54,7 @@ Airflow API
 poc/
 ├── docker-compose.yml
 ├── apisix/
-│   └── apisix.yaml
+│   └── config.yaml
 ├── fastapi-wrapper/
 │   ├── app.py
 │   ├── requirements.txt
@@ -89,40 +89,41 @@ docker compose version
 Create:
 
 ```yaml
-version: '3.9'
+version: "3.9"
 
 services:
-
-  apisix:
-    image: apache/apisix:3.9.1-debian
-    container_name: apisix
-    ports:
-      - "9080:9080"
-      - "9180:9180"
-    volumes:
-      - ./apisix/config.yaml:/usr/local/apisix/conf/config.yaml:ro
-    depends_on:
-      - fastapi-wrapper
-
-  fastapi-wrapper:
-    build: ./fastapi-wrapper
-    container_name: fastapi-wrapper
-    ports:
-      - "8000:8000"
-    environment:
-      AIRFLOW_BASE_URL: http://airflow-webserver:8080
-      AIRFLOW_USERNAME: admin
-      AIRFLOW_PASSWORD: admin
-    depends_on:
-      - airflow-webserver
 
   postgres:
     image: postgres:15
     container_name: airflow-postgres
+    restart: always
     environment:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
       POSTGRES_DB: airflow
+    ports:
+      - "5432:5432"
+
+  airflow-init:
+    image: apache/airflow:2.9.3
+    container_name: airflow-init
+    depends_on:
+      - postgres
+    env_file:
+      - ./airflow/airflow.env
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+    command: >
+      bash -c "
+      airflow db migrate &&
+      airflow users create
+      --username admin
+      --password admin
+      --firstname admin
+      --lastname admin
+      --role Admin
+      --email admin@example.com
+      "
 
   airflow-webserver:
     image: apache/airflow:2.9.3
@@ -130,6 +131,7 @@ services:
     restart: always
     depends_on:
       - postgres
+      - airflow-init
     env_file:
       - ./airflow/airflow.env
     volumes:
@@ -143,12 +145,61 @@ services:
     container_name: airflow-scheduler
     restart: always
     depends_on:
-      - airflow-webserver
+      - postgres
+      - airflow-init
     env_file:
       - ./airflow/airflow.env
     volumes:
       - ./airflow/dags:/opt/airflow/dags
     command: scheduler
+
+  fastapi-wrapper:
+    build: ./fastapi-wrapper
+    container_name: fastapi-wrapper
+    restart: always
+    depends_on:
+      - airflow-webserver
+    environment:
+      AIRFLOW_BASE_URL: http://airflow-webserver:8080
+      AIRFLOW_USERNAME: admin
+      AIRFLOW_PASSWORD: admin
+    ports:
+      - "8000:8000"
+
+
+
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.12
+    container_name: etcd
+    restart: always
+    environment:
+      ETCD_NAME: etcd
+      ETCD_DATA_DIR: /etcd-data
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd:2379
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+
+
+
+
+
+
+  apisix:
+    image: apache/apisix:3.9.1-debian
+    container_name: apisix
+    restart: always
+    depends_on:
+      - etcd
+      - fastapi-wrapper
+    ports:
+      - "9080:9080"
+      - "9180:9180"
+    environment:
+      APISIX_STAND_ALONE: "false"
+    volumes:
+      - ./apisix/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+
+
+
 ```
 
 ---
@@ -168,7 +219,7 @@ AIRFLOW__CORE__EXECUTOR=LocalExecutor
 AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
 AIRFLOW__CORE__LOAD_EXAMPLES=False
 AIRFLOW__WEBSERVER__RBAC=True
-AIRFLOW__API__AUTH_BACKENDS=airflow.api.auth.backend.basic_auth
+AIRFLOW__API__AUTH_BACKENDS=airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
 _AIRFLOW_WWW_USER_USERNAME=admin
 _AIRFLOW_WWW_USER_PASSWORD=admin
 _AIRFLOW_WWW_USER_FIRSTNAME=admin
@@ -287,7 +338,7 @@ RBAC = {
 def trigger_dag(
     dag_id: str,
     x_client_id: str = Header(...),
-    x_org_id: str = Header(...)
+    #x_org_id: str = Header(...)
 ):
 
     if dag_id not in RBAC.get(x_client_id, []):
@@ -299,7 +350,7 @@ def trigger_dag(
     payload = {
         "conf": {
             "client_id": x_client_id,
-            "org_id": x_org_id
+            #"org_id": x_org_id
         }
     }
 
@@ -325,39 +376,30 @@ def trigger_dag(
 Create:
 
 ```text
-apisix/apisix.yaml
+apisix/config.yaml
 ```
 
 Content:
 
 ```yaml
+
+deployment:
+  admin:
+    allow_admin:
+      - 0.0.0.0/0
+
+  etcd:
+    host:
+      - "http://etcd:2379"
+
 apisix:
   node_listen: 9080
 
-routes:
-  - uri: /trigger/*
-    methods:
-      - POST
+plugin_attr:
+  key-auth:
+    header: apikey
 
-    plugins:
-      key-auth: {}
 
-      proxy-rewrite:
-        headers:
-          set:
-            X-Client-Id: clientA
-            X-Org-Id: orgA
-
-    upstream:
-      type: roundrobin
-      nodes:
-        "fastapi-wrapper:8000": 1
-
-consumers:
-  - username: clientA
-    plugins:
-      key-auth:
-        key: clientA-secret-key
 ```
 
 ---
@@ -563,6 +605,18 @@ This proves:
 * metadata visibility
 
 ---
+
+# If you change fastapi-wrapper alone..
+
+```text
+docker compose up -d fastapi-wrapper
+```
+
+Sometimes only restart needed:
+
+```text
+docker restart fastapi-wrapper
+```
 
 # Recommended Next Phase After POC
 
