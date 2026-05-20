@@ -241,29 +241,32 @@ airflow/dags/sample_dag.py
 Content:
 
 ```python
-from airflow import DAG
-from airflow.operators.python import PythonOperator
+from airflow.decorators import dag, task
 from datetime import datetime
 
 
-def print_client(**context):
-    conf = context["dag_run"].conf
-
-    print("Triggered By Client:", conf.get("client_id"))
-    print("Organization:", conf.get("org_id"))
-
-
-with DAG(
+@dag(
     dag_id="sample_dag",
     start_date=datetime(2024, 1, 1),
     schedule=None,
     catchup=False,
-) as dag:
+    tags=["rbac", "client-trigger"],
+)
+def sample_dag():
 
-    task = PythonOperator(
-        task_id="print_client_info",
-        python_callable=print_client,
-    )
+    @task
+    def print_client_info(**context):
+        conf = context["dag_run"].conf
+
+        print("Triggered By Client:", conf.get("client_id"))
+        print("Organization:", conf.get("org_id", "N/A"))
+
+    print_client_info()
+
+
+dag = sample_dag()
+
+
 ```
 
 ---
