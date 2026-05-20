@@ -1,0 +1,478 @@
+{
+  "info": {
+    "_postman_id": "bc4533bc-b933-462b-be17-e71081f1c1ee",
+    "name": "apisix_postman_collection_files",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "55042815",
+    "_collection_link": "https://go.postman.co/collection/55042815-bc4533bc-b933-462b-be17-e71081f1c1ee?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "1_Configure Route Using Admin API",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "PUT",
+        "header": [
+          {
+            "key": "X-API-KEY",
+            "value": "edd1c9f034335f136f87ad84b625c8f1"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"uri\": \"/trigger/*\",\n  \"methods\": [\"POST\"],\n  \"plugins\": {\n    \"key-auth\": {},\n    \"proxy-rewrite\": {\n      \"headers\": {\n        \"set\": {\n          \"X-Client-Id\": \"$consumer_name\"\n        }\n      }\n    }\n  },\n  \"upstream\": {\n    \"type\": \"roundrobin\",\n    \"nodes\": {\n      \"fastapi-wrapper:8000\": 1\n    }\n  }\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:9180/apisix/admin/routes/1",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "9180",
+          "path": [
+            "apisix",
+            "admin",
+            "routes",
+            "1"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "1_Configure Route Using Admin API",
+          "originalRequest": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-API-KEY",
+                "value": "edd1c9f034335f136f87ad84b625c8f1"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"uri\": \"/trigger/*\",\n  \"methods\": [\"POST\"],\n  \"plugins\": {\n    \"key-auth\": {},\n    \"proxy-rewrite\": {\n      \"headers\": {\n        \"set\": {\n          \"X-Client-Id\": \"$consumer_name\"\n        }\n      }\n    }\n  },\n  \"upstream\": {\n    \"type\": \"roundrobin\",\n    \"nodes\": {\n      \"fastapi-wrapper:8000\": 1\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:9180/apisix/admin/routes/1",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1"
+              ],
+              "port": "9180",
+              "path": [
+                "apisix",
+                "admin",
+                "routes",
+                "1"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "Date",
+              "value": "Wed, 20 May 2026 14:03:56 GMT"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Server",
+              "value": "APISIX/3.9.1"
+            },
+            {
+              "key": "Access-Control-Allow-Origin",
+              "value": "*"
+            },
+            {
+              "key": "Access-Control-Allow-Credentials",
+              "value": "true"
+            },
+            {
+              "key": "Access-Control-Expose-Headers",
+              "value": "*"
+            },
+            {
+              "key": "Access-Control-Max-Age",
+              "value": "3600"
+            },
+            {
+              "key": "X-API-VERSION",
+              "value": "v3"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"key\": \"/apisix/routes/1\",\n    \"value\": {\n        \"status\": 1,\n        \"uri\": \"/trigger/*\",\n        \"create_time\": 1779285368,\n        \"plugins\": {\n            \"key-auth\": {\n                \"header\": \"apikey\",\n                \"hide_credentials\": false,\n                \"query\": \"apikey\"\n            },\n            \"proxy-rewrite\": {\n                \"headers\": {\n                    \"set\": {\n                        \"X-Client-Id\": \"$consumer_name\"\n                    }\n                },\n                \"use_real_request_uri_unsafe\": false\n            }\n        },\n        \"methods\": [\n            \"POST\"\n        ],\n        \"upstream\": {\n            \"scheme\": \"http\",\n            \"pass_host\": \"pass\",\n            \"nodes\": {\n                \"fastapi-wrapper:8000\": 1\n            },\n            \"hash_on\": \"vars\",\n            \"type\": \"roundrobin\"\n        },\n        \"priority\": 0,\n        \"update_time\": 1779285836,\n        \"id\": \"1\"\n    }\n}"
+        }
+      ]
+    },
+    {
+      "name": "2_create_consumer",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "PUT",
+        "header": [
+          {
+            "key": "X-API-KEY",
+            "value": "edd1c9f034335f136f87ad84b625c8f1"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"clientA\",\n  \"plugins\": {\n    \"key-auth\": {\n      \"key\": \"clientA-secret-keyA\"\n    }\n  }\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:9180/apisix/admin/consumers/clientA",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "9180",
+          "path": [
+            "apisix",
+            "admin",
+            "consumers",
+            "clientA"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "client_A creation",
+          "originalRequest": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-API-KEY",
+                "value": "edd1c9f034335f136f87ad84b625c8f1"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"clientA\",\n  \"plugins\": {\n    \"key-auth\": {\n      \"key\": \"clientA-secret-keyA\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:9180/apisix/admin/consumers/clientA",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1"
+              ],
+              "port": "9180",
+              "path": [
+                "apisix",
+                "admin",
+                "consumers",
+                "clientA"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "Date",
+              "value": "Wed, 20 May 2026 14:04:12 GMT"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Server",
+              "value": "APISIX/3.9.1"
+            },
+            {
+              "key": "Access-Control-Allow-Origin",
+              "value": "*"
+            },
+            {
+              "key": "Access-Control-Allow-Credentials",
+              "value": "true"
+            },
+            {
+              "key": "Access-Control-Expose-Headers",
+              "value": "*"
+            },
+            {
+              "key": "Access-Control-Max-Age",
+              "value": "3600"
+            },
+            {
+              "key": "X-API-VERSION",
+              "value": "v3"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"key\": \"/apisix/consumers/clientA\",\n    \"value\": {\n        \"username\": \"clientA\",\n        \"create_time\": 1779285383,\n        \"update_time\": 1779285852,\n        \"plugins\": {\n            \"key-auth\": {\n                \"key\": \"clientA-secret-keyA\"\n            }\n        }\n    }\n}"
+        },
+        {
+          "name": "2_create_consumer",
+          "originalRequest": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-API-KEY",
+                "value": "edd1c9f034335f136f87ad84b625c8f1"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"clientB\",\n  \"plugins\": {\n    \"key-auth\": {\n      \"key\": \"clientB-secret-keyB\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:9180/apisix/admin/consumers/clientB",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1"
+              ],
+              "port": "9180",
+              "path": [
+                "apisix",
+                "admin",
+                "consumers",
+                "clientB"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "Date",
+              "value": "Wed, 20 May 2026 14:10:13 GMT"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Server",
+              "value": "APISIX/3.9.1"
+            },
+            {
+              "key": "Access-Control-Allow-Origin",
+              "value": "*"
+            },
+            {
+              "key": "Access-Control-Allow-Credentials",
+              "value": "true"
+            },
+            {
+              "key": "Access-Control-Expose-Headers",
+              "value": "*"
+            },
+            {
+              "key": "Access-Control-Max-Age",
+              "value": "3600"
+            },
+            {
+              "key": "X-API-VERSION",
+              "value": "v3"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"key\": \"/apisix/consumers/clientB\",\n    \"value\": {\n        \"username\": \"clientB\",\n        \"create_time\": 1779286129,\n        \"update_time\": 1779286213,\n        \"plugins\": {\n            \"key-auth\": {\n                \"key\": \"clientB-secret-keyB\"\n            }\n        }\n    }\n}"
+        }
+      ]
+    },
+    {
+      "name": "3_Trigger DAG",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "clientA-secret-keyA"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:9080/trigger/sample_dag",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9080",
+          "path": [
+            "trigger",
+            "sample_dag"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "3_Trigger DAG",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "clientA-secret-keyA"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:9080/trigger/sample_dag",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "9080",
+              "path": [
+                "trigger",
+                "sample_dag"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Content-Length",
+              "value": "503"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "date",
+              "value": "Wed, 20 May 2026 14:05:23 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "APISIX/3.9.1"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"status\": \"success\",\n    \"airflow_response\": {\n        \"conf\": {\n            \"client_id\": \"clientA\"\n        },\n        \"dag_id\": \"sample_dag\",\n        \"dag_run_id\": \"manual__2026-05-20T14:05:24.015969+00:00\",\n        \"data_interval_end\": \"2026-05-20T14:05:24.015969+00:00\",\n        \"data_interval_start\": \"2026-05-20T14:05:24.015969+00:00\",\n        \"end_date\": null,\n        \"execution_date\": \"2026-05-20T14:05:24.015969+00:00\",\n        \"external_trigger\": true,\n        \"last_scheduling_decision\": null,\n        \"logical_date\": \"2026-05-20T14:05:24.015969+00:00\",\n        \"note\": null,\n        \"run_type\": \"manual\",\n        \"start_date\": null,\n        \"state\": \"queued\"\n    }\n}"
+        },
+        {
+          "name": "3_Trigger DAG",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "clientA-secret-keyB"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:9080/trigger/sample_dag",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "9080",
+              "path": [
+                "trigger",
+                "sample_dag"
+              ]
+            }
+          },
+          "status": "Unauthorized",
+          "code": 401,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "Date",
+              "value": "Wed, 20 May 2026 14:05:58 GMT"
+            },
+            {
+              "key": "Content-Type",
+              "value": "text/plain; charset=utf-8"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Server",
+              "value": "APISIX/3.9.1"
+            }
+          ],
+          "cookie": [],
+          "body": "{\"message\":\"Invalid API key in request\"}\n"
+        }
+      ]
+    }
+  ]
+}
