@@ -425,8 +425,7 @@ curl http://127.0.0.1:9180/apisix/admin/routes/1 \
     "proxy-rewrite": {
       "headers": {
         "set": {
-          "X-Client-Id": "clientA",
-          "X-Org-Id": "orgA"
+          "X-Client-Id": "$consumer_name"
         }
       }
     }
