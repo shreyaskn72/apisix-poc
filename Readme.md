@@ -453,13 +453,12 @@ admin/admin
 ---
 
 # Configure Route Using Admin API
-```bash
 
-curl http://127.0.0.1:9180/apisix/admin/routes/1 \
--X PUT \
--H "X-API-KEY: edd1c9f034335f136f87ad84b625c8f1" \
--d '
-{
+```bash
+curl --location --request PUT "http://127.0.0.1:9180/apisix/admin/routes/1" \
+--header "X-API-KEY: edd1c9f034335f136f87ad84b625c8f1" \
+--header "Content-Type: application/json" \
+--data-raw '{
   "uri": "/trigger/*",
   "methods": ["POST"],
   "plugins": {
@@ -479,14 +478,15 @@ curl http://127.0.0.1:9180/apisix/admin/routes/1 \
     }
   }
 }'
+
+
 ```
 # Create Consumer
 ```bash
-curl http://127.0.0.1:9180/apisix/admin/consumers \
--X PUT \
--H "X-API-KEY: edd1c9f034335f136f87ad84b625c8f1" \
--d '
-{
+curl --location --request PUT "http://127.0.0.1:9180/apisix/admin/consumers/clientA" \
+--header "X-API-KEY: edd1c9f034335f136f87ad84b625c8f1" \
+--header "Content-Type: application/json" \
+--data-raw '{
   "username": "clientA",
   "plugins": {
     "key-auth": {
@@ -495,6 +495,7 @@ curl http://127.0.0.1:9180/apisix/admin/consumers \
   }
 }'
 ```
+
 
 # STEP 12 — Trigger DAG Through APISIX
 
