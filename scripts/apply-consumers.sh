@@ -13,10 +13,10 @@ curl http://127.0.0.1:9180/apisix/admin/consumers/clientA \
 echo ""
 echo "Applying clientB consumer..."
 
-#curl http://127.0.0.1:9180/apisix/admin/consumers/clientB \
-#  -X PUT \
-#  -H "X-API-KEY: ${ADMIN_API_KEY}" \
-#  -d @../consumers/clientB.json
+curl http://127.0.0.1:9180/apisix/admin/consumers/clientB \
+  -X PUT \
+  -H "X-API-KEY: ${ADMIN_API_KEY}" \
+  -d @../consumers/clientB.json
 
 echo ""
 echo "Consumers applied successfully."

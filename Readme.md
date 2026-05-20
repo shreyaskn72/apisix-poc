@@ -490,7 +490,7 @@ curl http://127.0.0.1:9180/apisix/admin/consumers \
   "username": "clientA",
   "plugins": {
     "key-auth": {
-      "key": "clientA-secret-key"
+      "key": "clientA-secret-keyA"
     }
   }
 }'
@@ -503,7 +503,7 @@ Run:
 ```bash
 curl -X POST \
 http://localhost:9080/trigger/sample_dag \
--H "apikey: clientA-secret-key"
+-H "apikey: clientA-secret-keyA"
 ```
 
 Expected Response:
@@ -527,21 +527,13 @@ RBAC = {
 }
 ```
 
-If you configure another APISIX consumer:
-
-```yaml
-- username: clientB
-  plugins:
-    key-auth:
-      key: clientB-secret-key
-```
 
 and call:
 
 ```bash
 curl -X POST \
 http://localhost:9080/trigger/sample_dag \
--H "apikey: clientB-secret-key"
+-H "apikey: clientB-secret-keyB"
 ```
 
 Expected:

@@ -3,7 +3,7 @@
   "username": "clientA",
   "plugins": {
     "key-auth": {
-      "key": "clientA-secret-key"
+      "key": "clientA-secret-keyA"
     }
   }
 }
