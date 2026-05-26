@@ -13,7 +13,7 @@ AIRFLOW_PASSWORD = os.getenv("AIRFLOW_PASSWORD")
 
 RBAC = {
     "clientA": ["sample_dag"],
-    "clientB": []
+    "clientB": ["sample_dag"]
 }
 
 

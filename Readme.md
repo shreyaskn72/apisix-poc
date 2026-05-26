@@ -641,6 +641,10 @@ This proves:
 # If you change fastapi-wrapper alone..
 
 ```text
+docker compose build --no-cache fastapi-wrapper
+```
+
+```text
 docker compose up -d fastapi-wrapper
 ```
 
