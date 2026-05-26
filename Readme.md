@@ -536,6 +536,29 @@ curl --location --request PUT "http://127.0.0.1:9180/apisix/admin/consumers/clie
 ```
 
 
+# Create Airflow users
+For Airflow 3.x with FAB auth manager:
+
+```bash
+docker exec -it airflow-api-server airflow users create \
+  --username clientA \
+  --password clientApass \
+  --firstname Client \
+  --lastname A \
+  --role User \
+  --email clientA@example.com
+```
+```bash
+docker exec -it airflow-api-server airflow users create \
+  --username clientB \
+  --password clientBpass \
+  --firstname Client \
+  --lastname B \
+  --role User \
+  --email clientB@example.com
+```
+
+
 # STEP 12 — Trigger DAG Through APISIX
 
 Run:
@@ -610,6 +633,21 @@ This proves:
 * Airflow received tenant metadata
 
 ---
+
+
+# To view audit logs in db:
+```bash
+SELECT
+    id,
+    dttm,
+    event,
+    dag_id,
+    owner,
+    extra
+FROM log
+WHERE event = 'trigger_dag_run'
+ORDER BY dttm DESC;
+```
 
 # What This POC Demonstrates
 
