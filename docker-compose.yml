@@ -14,7 +14,7 @@ services:
       - "5432:5432"
 
   airflow-init:
-    image: apache/airflow:2.9.3
+    image: apache/airflow:3.0.6
     container_name: airflow-init
     depends_on:
       - postgres
@@ -34,9 +34,9 @@ services:
       --email admin@example.com
       "
 
-  airflow-webserver:
-    image: apache/airflow:2.9.3
-    container_name: airflow-webserver
+  airflow-api-server:
+    image: apache/airflow:3.0.6
+    container_name: airflow-api-server
     restart: always
     depends_on:
       - postgres
@@ -45,12 +45,12 @@ services:
       - ./airflow/airflow.env
     volumes:
       - ./airflow/dags:/opt/airflow/dags
-    command: webserver
+    command: api-server
     ports:
       - "8081:8080"
 
   airflow-scheduler:
-    image: apache/airflow:2.9.3
+    image: apache/airflow:3.0.6
     container_name: airflow-scheduler
     restart: always
     depends_on:
@@ -62,14 +62,26 @@ services:
       - ./airflow/dags:/opt/airflow/dags
     command: scheduler
 
+  airflow-dag-processor:
+    image: apache/airflow:3.0.6
+    container_name: airflow-dag-processor
+    restart: always
+    depends_on:
+      - postgres
+    env_file:
+      - ./airflow/airflow.env
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+    command: dag-processor
+
   fastapi-wrapper:
     build: ./fastapi-wrapper
     container_name: fastapi-wrapper
     restart: always
     depends_on:
-      - airflow-webserver
+      - airflow-api-server
     environment:
-      AIRFLOW_BASE_URL: http://airflow-webserver:8080
+      AIRFLOW_BASE_URL: http://airflow-api-server:8080
       AIRFLOW_USERNAME: admin
       AIRFLOW_PASSWORD: admin
     ports:

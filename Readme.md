@@ -422,13 +422,13 @@ docker compose up -d
 Run:
 
 ```bash
-docker exec -it airflow-webserver airflow db migrate
+docker exec -it airflow-api-server airflow db migrate
 ```
 
 Create admin user:
 
 ```bash
-docker exec -it airflow-webserver airflow users create \
+docker exec -it airflow-api-server airflow users create \
   --username admin \
   --password admin \
   --firstname admin \
