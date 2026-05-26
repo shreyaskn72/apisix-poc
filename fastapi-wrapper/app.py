@@ -2,6 +2,7 @@ import os
 import requests
 from fastapi import FastAPI, Header, HTTPException
 from requests.auth import HTTPBasicAuth
+from datetime import datetime, timezone
 
 app = FastAPI()
 
@@ -30,22 +31,33 @@ def trigger_dag(
         )
 
     payload = {
+        "logical_date": datetime.now(timezone.utc).isoformat(),
         "conf": {
             "client_id": x_client_id,
             #"org_id": x_org_id
         }
     }
 
+    login_resp = requests.post(
+        f"{AIRFLOW_BASE_URL}/auth/token",
+        json={
+            "username": AIRFLOW_USERNAME,
+            "password": AIRFLOW_PASSWORD
+        }
+    )
+
+    token = login_resp.json()["access_token"]
+
     response = requests.post(
-        f"{AIRFLOW_BASE_URL}/api/v1/dags/{dag_id}/dagRuns",
-        auth=HTTPBasicAuth(
-            AIRFLOW_USERNAME,
-            AIRFLOW_PASSWORD
-        ),
+        f"{AIRFLOW_BASE_URL}/api/v2/dags/{dag_id}/dagRuns",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
         json=payload,
     )
 
     return {
         "status": "success",
-        "airflow_response": response.json()
+        "airflow_response": response.json(),
+        "response_text": response.text
     }

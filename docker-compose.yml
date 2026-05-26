@@ -37,6 +37,7 @@ services:
   airflow-api-server:
     image: apache/airflow:3.0.6
     container_name: airflow-api-server
+    hostname: airflow-api-server
     restart: always
     depends_on:
       - postgres
@@ -45,6 +46,7 @@ services:
       - ./airflow/airflow.env
     volumes:
       - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
     command: api-server
     ports:
       - "8081:8080"
@@ -52,6 +54,7 @@ services:
   airflow-scheduler:
     image: apache/airflow:3.0.6
     container_name: airflow-scheduler
+    hostname: airflow-scheduler
     restart: always
     depends_on:
       - postgres
@@ -60,11 +63,13 @@ services:
       - ./airflow/airflow.env
     volumes:
       - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
     command: scheduler
 
   airflow-dag-processor:
     image: apache/airflow:3.0.6
     container_name: airflow-dag-processor
+    hostname: airflow-dag-processor
     restart: always
     depends_on:
       - postgres
@@ -72,6 +77,7 @@ services:
       - ./airflow/airflow.env
     volumes:
       - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
     command: dag-processor
 
   fastapi-wrapper:
