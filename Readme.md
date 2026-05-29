@@ -346,21 +346,30 @@ Content:
 import os
 import requests
 from fastapi import FastAPI, Header, HTTPException
-from requests.auth import HTTPBasicAuth
+
 from datetime import datetime, timezone
 
 app = FastAPI()
 
 AIRFLOW_BASE_URL = os.getenv("AIRFLOW_BASE_URL")
-AIRFLOW_USERNAME = os.getenv("AIRFLOW_USERNAME")
-AIRFLOW_PASSWORD = os.getenv("AIRFLOW_PASSWORD")
+
 
 
 RBAC = {
     "clientA": ["sample_dag"],
-    "clientB": []
+    "clientB": ["sample_dag"]
 }
 
+CLIENTS = {
+    "clientA": {
+        "username": "clientA",
+        "password": "clientApass"
+    },
+    "clientB": {
+        "username": "clientB",
+        "password": "clientBpass"
+    }
+}
 
 @app.post("/trigger/{dag_id}")
 def trigger_dag(
@@ -383,13 +392,31 @@ def trigger_dag(
         }
     }
 
+    client = CLIENTS.get(x_client_id)
+
+    if not client:
+        raise HTTPException(
+            status_code=403,
+            detail="Unknown client"
+        )
+
     login_resp = requests.post(
         f"{AIRFLOW_BASE_URL}/auth/token",
         json={
-            "username": AIRFLOW_USERNAME,
-            "password": AIRFLOW_PASSWORD
+            "username": client["username"],
+            "password": client["password"]
         }
     )
+
+
+    if login_resp.status_code not in [200,201]:
+        raise HTTPException(
+            status_code=login_resp.status_code,
+            detail=f"Airflow authentication failed: {login_resp.text}",
+        )
+
+
+
 
     token = login_resp.json()["access_token"]
 
