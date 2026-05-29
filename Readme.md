@@ -105,7 +105,7 @@ services:
       - "5432:5432"
 
   airflow-init:
-    image: apache/airflow:2.9.3
+    image: apache/airflow:3.0.6
     container_name: airflow-init
     depends_on:
       - postgres
@@ -125,9 +125,10 @@ services:
       --email admin@example.com
       "
 
-  airflow-webserver:
-    image: apache/airflow:2.9.3
-    container_name: airflow-webserver
+  airflow-api-server:
+    image: apache/airflow:3.0.6
+    container_name: airflow-api-server
+    hostname: airflow-api-server
     restart: always
     depends_on:
       - postgres
@@ -136,13 +137,15 @@ services:
       - ./airflow/airflow.env
     volumes:
       - ./airflow/dags:/opt/airflow/dags
-    command: webserver
+      - ./airflow/logs:/opt/airflow/logs
+    command: api-server
     ports:
       - "8081:8080"
 
   airflow-scheduler:
-    image: apache/airflow:2.9.3
+    image: apache/airflow:3.0.6
     container_name: airflow-scheduler
+    hostname: airflow-scheduler
     restart: always
     depends_on:
       - postgres
@@ -151,16 +154,31 @@ services:
       - ./airflow/airflow.env
     volumes:
       - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
     command: scheduler
+
+  airflow-dag-processor:
+    image: apache/airflow:3.0.6
+    container_name: airflow-dag-processor
+    hostname: airflow-dag-processor
+    restart: always
+    depends_on:
+      - postgres
+    env_file:
+      - ./airflow/airflow.env
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+    command: dag-processor
 
   fastapi-wrapper:
     build: ./fastapi-wrapper
     container_name: fastapi-wrapper
     restart: always
     depends_on:
-      - airflow-webserver
+      - airflow-api-server
     environment:
-      AIRFLOW_BASE_URL: http://airflow-webserver:8080
+      AIRFLOW_BASE_URL: http://airflow-api-server:8080
       AIRFLOW_USERNAME: admin
       AIRFLOW_PASSWORD: admin
     ports:
@@ -200,6 +218,7 @@ services:
 
 
 
+
 ```
 
 ---
@@ -218,14 +237,19 @@ Content:
 AIRFLOW__CORE__EXECUTOR=LocalExecutor
 AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
 AIRFLOW__CORE__LOAD_EXAMPLES=False
-AIRFLOW__WEBSERVER__RBAC=True
-AIRFLOW__API__AUTH_BACKENDS=airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+#AIRFLOW__WEBSERVER__RBAC=True
+#AIRFLOW__API__AUTH_BACKENDS=airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+AIRFLOW__API_AUTH__JWT_SECRET=randomsecret
 _AIRFLOW_WWW_USER_USERNAME=admin
 _AIRFLOW_WWW_USER_PASSWORD=admin
 _AIRFLOW_WWW_USER_FIRSTNAME=admin
 _AIRFLOW_WWW_USER_LASTNAME=admin
 _AIRFLOW_WWW_USER_ROLE=Admin
 _AIRFLOW_WWW_USER_EMAIL=admin@example.com
+AIRFLOW__CORE__AUTH_MANAGER=airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+AIRFLOW__CORE__HOSTNAME_CALLABLE=socket.getfqdn
+AIRFLOW__LOGGING__BASE_LOG_FOLDER=/opt/airflow/logs
+AIRFLOW__CORE__EXECUTION_API_SERVER_URL=http://airflow-api-server:8080/execution/
 ```
 
 ---
@@ -322,20 +346,30 @@ Content:
 import os
 import requests
 from fastapi import FastAPI, Header, HTTPException
-from requests.auth import HTTPBasicAuth
+
+from datetime import datetime, timezone
 
 app = FastAPI()
 
 AIRFLOW_BASE_URL = os.getenv("AIRFLOW_BASE_URL")
-AIRFLOW_USERNAME = os.getenv("AIRFLOW_USERNAME")
-AIRFLOW_PASSWORD = os.getenv("AIRFLOW_PASSWORD")
+
 
 
 RBAC = {
     "clientA": ["sample_dag"],
-    "clientB": []
+    "clientB": ["sample_dag"]
 }
 
+CLIENTS = {
+    "clientA": {
+        "username": "clientA",
+        "password": "clientApass"
+    },
+    "clientB": {
+        "username": "clientB",
+        "password": "clientBpass"
+    }
+}
 
 @app.post("/trigger/{dag_id}")
 def trigger_dag(
@@ -351,24 +385,53 @@ def trigger_dag(
         )
 
     payload = {
+        "logical_date": datetime.now(timezone.utc).isoformat(),
         "conf": {
             "client_id": x_client_id,
             #"org_id": x_org_id
         }
     }
 
+    client = CLIENTS.get(x_client_id)
+
+    if not client:
+        raise HTTPException(
+            status_code=403,
+            detail="Unknown client"
+        )
+
+    login_resp = requests.post(
+        f"{AIRFLOW_BASE_URL}/auth/token",
+        json={
+            "username": client["username"],
+            "password": client["password"]
+        }
+    )
+
+
+    if login_resp.status_code not in [200,201]:
+        raise HTTPException(
+            status_code=login_resp.status_code,
+            detail=f"Airflow authentication failed: {login_resp.text}",
+        )
+
+
+
+
+    token = login_resp.json()["access_token"]
+
     response = requests.post(
-        f"{AIRFLOW_BASE_URL}/api/v1/dags/{dag_id}/dagRuns",
-        auth=HTTPBasicAuth(
-            AIRFLOW_USERNAME,
-            AIRFLOW_PASSWORD
-        ),
+        f"{AIRFLOW_BASE_URL}/api/v2/dags/{dag_id}/dagRuns",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
         json=payload,
     )
 
     return {
         "status": "success",
-        "airflow_response": response.json()
+        "airflow_response": response.json(),
+        "response_text": response.text
     }
 ```
 
@@ -411,6 +474,11 @@ plugin_attr:
 
 Run:
 
+To build without cache (optional):
+```bash
+docker compose build --no-cache
+```
+
 ```bash
 docker compose up -d
 ```
@@ -422,13 +490,13 @@ docker compose up -d
 Run:
 
 ```bash
-docker exec -it airflow-webserver airflow db migrate
+docker exec -it airflow-api-server airflow db migrate
 ```
 
 Create admin user:
 
 ```bash
-docker exec -it airflow-webserver airflow users create \
+docker exec -it airflow-api-server airflow users create \
   --username admin \
   --password admin \
   --firstname admin \
@@ -497,6 +565,29 @@ curl --location --request PUT "http://127.0.0.1:9180/apisix/admin/consumers/clie
     }
   }
 }'
+```
+
+
+# Create Airflow users
+For Airflow 3.x with FAB auth manager:
+
+```bash
+docker exec -it airflow-api-server airflow users create \
+  --username clientA \
+  --password clientApass \
+  --firstname Client \
+  --lastname A \
+  --role User \
+  --email clientA@example.com
+```
+```bash
+docker exec -it airflow-api-server airflow users create \
+  --username clientB \
+  --password clientBpass \
+  --firstname Client \
+  --lastname B \
+  --role User \
+  --email clientB@example.com
 ```
 
 
@@ -575,6 +666,21 @@ This proves:
 
 ---
 
+
+# To view audit logs in db:
+```bash
+SELECT
+    id,
+    dttm,
+    event,
+    dag_id,
+    owner,
+    extra
+FROM log
+WHERE event = 'trigger_dag_run'
+ORDER BY dttm DESC;
+```
+
 # What This POC Demonstrates
 
 ## APISIX Responsibilities
@@ -603,6 +709,10 @@ This proves:
 ---
 
 # If you change fastapi-wrapper alone..
+
+```text
+docker compose build --no-cache fastapi-wrapper
+```
 
 ```text
 docker compose up -d fastapi-wrapper
