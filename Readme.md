@@ -447,6 +447,11 @@ plugin_attr:
 
 Run:
 
+To build without cache (optional):
+```bash
+docker compose build --no-cache
+```
+
 ```bash
 docker compose up -d
 ```
